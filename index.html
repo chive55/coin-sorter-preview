@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Coin Sorter - Teacher Games</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font-family:Comic Sans MS,Chalkboard SE,Segoe UI,sans-serif;background:#4cc5fd;color:#3d315f}#game{display:block;width:100%;height:100%;touch-action:none}#help{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font-weight:700;color:#fff;text-shadow:1px 2px #3d315f;font-size:clamp(11px,1.5vw,18px);pointer-events:none}
+</style>
+</head><body><canvas id="game" aria-label="Coin Sorter game"></canvas><div id="help">Tap a matching jar or drag the coin • Keys 1–4 also sort</div>
+<script>
+'use strict';
+const c=document.getElementById('game'),x=c.getContext('2d');let dpr=1,w=0,h=0,scale=1,ox=0,oy=0,state='title',round=0,score=0,hearts=3,coin=null,jars=[],buttons=[],drag=null,msg='',msgTime=0,confetti=[];
+const types=[['penny','Penny','1¢','#c8753d'],['nickel','Nickel','5¢','#bfcbd5'],['dime','Dime','10¢','#d7e1eb'],['quarter','Quarter','25¢','#aebdca']];
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),pick=a=>a[Math.floor(Math.random()*a.length)],S=n=>n*scale,X=n=>ox+n*scale,Y=n=>oy+n*scale;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;c.width=w*dpr;c.height=h*dpr;c.style.width=w+'px';c.style.height=h+'px';scale=Math.min(w/1000,h/700);ox=(w-1000*scale)/2;oy=(h-700*scale)/2;x.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+function roundRect(px,py,pw,ph,r,fill,stroke='#3d315f',lw=4){x.beginPath();x.roundRect(px,py,pw,ph,r);x.fillStyle=fill;x.fill();x.lineWidth=lw;x.strokeStyle=stroke;x.stroke()}
+function text(t,px,py,size,color='#3d315f'){x.fillStyle=color;x.font='900 '+S(size)+'px Comic Sans MS,Chalkboard SE,Segoe UI,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(t,X(px),Y(py))}
+function coin(type,px,py,r=50){let a=types.find(z=>z[0]===type)||types[0],cx=X(px),cy=Y(py),R=S(r);x.save();x.shadowColor='rgba(40,30,60,.25)';x.shadowBlur=S(8);x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);let g=x.createRadialGradient(cx-R*.35,cy-R*.4,R*.1,cx,cy,R);g.addColorStop(0,'#fff');g.addColorStop(.3,a[3]);g.addColorStop(1,a[3]==='#c8753d'?'#9b4d25':'#8798a8');x.fillStyle=g;x.fill();x.strokeStyle='#3d315f';x.lineWidth=S(5);x.stroke();x.shadowBlur=0;text(a[2],px,py,Math.max(18,r*.42),a[0]==='penny'?'#713513':'#3d315f');x.restore()}
+function jar(j,i){let px=220+i*190,py=500;roundRect(X(px-68),Y(py-100),S(136),S(190),S(22),'rgba(235,245,250,.72)');roundRect(X(px-62),Y(py-112),S(124),S(28),S(9),j[3]);for(let n=0;n<j.count;n++)coin(j[0],px-28+(n%3)*28,py+63-Math.floor(n/3)*14,14);roundRect(X(px-57),Y(py-5),S(114),S(66),S(10),'#fffdf7');text(j[1],px,py+18,17);text(j[2],px,py+44,18,'#279363')}
+function sky(){let g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#4cc5fd');g.addColorStop(.65,'#a8e8a0');g.addColorStop(1,'#5cbf4a');x.fillStyle=g;x.fillRect(0,0,w,h);x.fillStyle='#ffe66d';x.beginPath();x.arc(X(900),Y(80),S(48),0,7);x.fill();x.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<5;i++){x.beginPath();x.arc(X(120+i*190),Y(90+(i%2)*35),S(28),0,7);x.arc(X(150+i*190),Y(82+(i%2)*35),S(34),0,7);x.arc(X(185+i*190),Y(94+(i%2)*35),S(25),0,7);x.fill()}}
+function button(label,px,py,pw,ph,action,color='#f5a623'){roundRect(X(px),Y(py+7),S(pw),S(ph),S(ph/2),'rgba(40,30,60,.25)','transparent',0);roundRect(X(px),Y(py),S(pw),S(ph),S(ph/2),color);text(label,px+pw/2,py+ph/2,30,'#fff');buttons.push({x:px,y:py,w:pw,h:ph,action})}
+function title(){sky();buttons=[];text('COIN SORTER',500,135,66,'#fff');text('Sort each coin into the right jar!',500,205,25);roundRect(X(210),Y(260),S(580),S(55),S(15),'#e0ad67');text('Learn coins while you play!',500,288,23);types.forEach((a,i)=>coin(a[0],220+i*190,375,38));button('PLAY',350,600,300,70,'play');text('BRIGHT MINDS - BRIGHTER TOMORROW',500,680,16)}
+function play(){sky();buttons=[];text('Round '+round+'   Wins '+score,170,42,22);text('Which jar matches?',500,42,25);for(let i=0;i<4;i++)jar(jars[i],i);if(coin)coin(coin.type,500,265,58);if(msgTime>0)text(msg,500,355,30,msg==='Nice!'?'#279363':'#e85a7a');text('1 Penny   2 Nickel   3 Dime   4 Quarter',500,635,18);text('BRIGHT MINDS - BRIGHTER TOMORROW',500,680,16);confetti.forEach(p=>{x.fillStyle=p.c;x.fillRect(X(p.x),Y(p.y),S(7),S(7))})}
+function start(){state='play';round++;hearts=3;jars=types.map(a=>({...a,count:0}));next()}
+function next(){coin={type:pick(types.slice(0,Math.min(4,2+Math.floor(score/2))))[0],x:500,y:265};msg='';msgTime=0}
+function sort(id){if(state!=='play'||!coin)return;if(id===coin.type){jars.find(j=>j[0]===id).count++;score++;msg='Nice!';confetti=Array.from({length:18},()=>({x:500,y:280,vx:(Math.random()-.5)*15,vy:-Math.random()*13,c:pick(['#ff6b9d','#ffd93d','#4d96ff','#fff'])}));setTimeout(next,500)}else{msg='Try again!';hearts--;if(hearts<=0){state='over';coin=null}}msgTime=1}
+function pos(e){let r=c.getBoundingClientRect();return{x:(e.clientX-r.left-ox)/scale,y:(e.clientY-r.top-oy)/scale}}
+function down(e){e.preventDefault();let p=pos(e);if(state==='title'&&p.x>330&&p.x<670&&p.y>570){start();return}if(state==='play'){for(let i=0;i<4;i++)if(p.x>145+i*190&&p.x<295+i*190&&p.y>360&&p.y<620){sort(types[i][0]);return}if(coin&&Math.hypot(p.x-coin.x,p.y-coin.y)<75){drag={type:coin.type,x:p.x,y:p.y};coin=null}}else if(state==='over'){start()}}
+function move(e){if(drag){e.preventDefault();let p=pos(e);drag.x=p.x;drag.y=p.y}}
+function up(e){if(!drag)return;let p=pos(e),id=null;for(let i=0;i<4;i++)if(p.x>145+i*190&&p.x<295+i*190&&p.y>360&&p.y<620)id=types[i][0];let t=drag.type;drag=null;if(id)sort(id);else coin={type:t,x:500,y:265}}
+c.addEventListener('pointerdown',down);c.addEventListener('pointermove',move);c.addEventListener('pointerup',up);addEventListener('keydown',e=>{if(e.key>='1'&&e.key<='4')sort(types[+e.key-1][0]);if((e.key==='Enter'||e.key===' ')&&state==='title')start();if((e.key==='Enter'||e.key===' ')&&state==='over')start()});
+function frame(){if(state==='title')title();else if(state==='play')play();else{sky();buttons=[];text('Good try!',500,250,58,'#f76b8e');text('You sorted '+score+' coins!',500,330,28);button('PLAY AGAIN',350,430,300,75,'again','#3fa34a')}if(drag)coin(drag.type,drag.x,drag.y,55);confetti.forEach(p=>{p.x+=p.vx*.04;p.y+=p.vy*.04;p.vy+=.3});confetti=confetti.filter(p=>p.y<700);msgTime=Math.max(0,msgTime-.016);requestAnimationFrame(frame)}frame();
+</script></body></html>
